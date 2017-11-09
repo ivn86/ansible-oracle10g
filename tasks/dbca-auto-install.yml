@@ -1,0 +1,21 @@
+- name: Copy template dbca.rsp
+  template:
+    src: "{{ item }}"
+    dest: "/opt/oracle/{{ item }}"
+    owner: oracle
+    group: oinstall
+    mode: 0660
+    backup: no
+  with_items:
+  - dbca.rsp
+
+# TODO: Restart oracle need :)
+- name: Setup DB
+  shell: "ORACLE_BASE={{ oracle_base }} && \
+          export ORACLE_BASE && \
+          {{ oracle_home }}/bin/dbca \
+          -silent \
+          -responseFile /opt/oracle/dbca.rsp >> /opt/oracle/dbca_auto_install.log"
+  become: yes
+  become_user: oracle
+

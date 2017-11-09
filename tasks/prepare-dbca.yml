@@ -1,0 +1,12 @@
+- name: mv oracle oracle.bin
+  command: mv {{ oracle_home }}/bin/oracle {{ oracle_home }}/bin/oracle.bin
+
+- name: Copy oracle sh
+  copy:
+    src: "oracle.sh"
+    dest: "{{ oracle_home }}/bin/oracle"
+    owner: oracle
+    group: oinstall
+    mode: 755
+    backup: no
+

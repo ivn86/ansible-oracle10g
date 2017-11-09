@@ -1,0 +1,88 @@
+- name: Add oinstall and dba groups
+  group: name={{ item }} state=present
+  with_items:
+  - oinstall
+  - dba
+
+- name: Add oracle user
+# useradd -d /opt/oracle -g oinstall -G dba -s /bin/bash -m oracle
+  user: name=oracle home=/opt/oracle group=oinstall groups=dba shell=/bin/bash
+
+- name: Create .ssh catalog
+  file: path=/opt/oracle/.ssh state=directory owner=oracle group=oinstall
+
+- name: Check authorized_keys file
+  stat: path=/opt/oracle/.ssh/authorized_keys
+  register: authorized_keys
+
+- name: Copy root authorized_keys if not exists
+  command: "cp /root/.ssh/authorized_keys /opt/oracle/.ssh/"
+  when: authorized_keys.stat.exists == false
+
+- name: Oracles authorized_keys permissions
+  file: path=/opt/oracle/.ssh/authorized_keys state=file owner=oracle group=oinstall
+
+- name: Update system.ctl 
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    sysctl_set: yes
+    state: present
+    reload: yes
+  with_items:
+  - { name: 'kernel.sem', value: '250 32000 100 128' }
+  - { name: 'fs.file-max', value: '6815744' }
+  - { name: 'net.ipv4.ip_local_port_range', value: '9000 65500' }
+  - { name: 'net.core.rmem_default', value: '262144' }
+  - { name: 'net.core.rmem_max', value: '4194304' }
+  - { name: 'net.core.wmem_default', value: '262144' }
+  - { name: 'net.core.wmem_max', value: '1048576' }
+  - { name: 'fs.aio-max-nr', value: '1048576' }
+  ignore_errors: True
+
+- name: Update limits.conf
+  # ERROR: pam_limits is not a legal parameter in an Ansible task or handler
+  #   pam_limits: domain={{ item.domain }} limit_type={{ item.type }} limit_item={{ item.item }} value={{ item.value }}
+  lineinfile:
+    dest: "/etc/security/limits.conf"
+    line: "{{ item.domain }} {{ item.type }} {{ item.item }} {{ item.value }}" 
+  with_items:
+  - { domain: 'oracle', type: 'soft', item: 'nproc', value: 2047 }
+  - { domain: 'oracle', type: 'hard', item: 'nproc', value: '16384' }
+  - { domain: 'oracle', type: 'soft', item: 'nofile', value: '1024' }
+  - { domain: 'oracle', type: 'hard', item: 'nofile', value: '65536' }
+
+- name: Update /etc/pam.d/login
+  lineinfile:
+    dest: "/etc/pam.d/login"
+    line: "{{ item.session }} {{ item.type }} {{ item.value }}"
+  with_items:
+  - { session: 'session', type: 'required', value: '/lib64/security/pam_limits.so' }
+  - { session: 'session', type: 'required', value: 'pam_limits.so' }
+
+- name: Copy /etc/profile.d/custom.sh
+  copy:
+    src: "custom.sh"
+    dest: "/etc/profile.d/custom.sh"
+    owner: root
+    group: root
+    mode: 755
+    backup: no
+
+- name: Update /etc/profile
+  lineinfile:
+    dest: "/etc/profile"
+    line: "{{ item }}"
+  with_items:
+  - "ORACLE_BASE={{ oracle_base }}"
+  - "ORACLE_HOME={{ oracle_home }}"
+  - "ORACLE_SID={{ oracle_sid }}"
+  - "export ORACLE_BASE ORACLE_HOME ORACLE_SID"
+  - "PATH=$ORACLE_HOME/bin:$ORACLE_HOME/lib:$ORACLE_HOME/lib32:$PATH:."
+  - "export PATH"
+  - "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ORACLE_HOME/lib:$ORACLE_HOME/lib32:/lib:/usr/lib"
+  - "CLASSPATH=$ORACLE_HOME/JRE:$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib"
+  - "export LD_LIBRARY_PATH CLASSPATH"
+  - "export NLS_LANG=AMERICAN_AMERICA.UTF8"
+  - "export DISABLE_HUGETLBFS=1"
+

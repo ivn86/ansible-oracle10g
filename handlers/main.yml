@@ -1,0 +1,5 @@
+---
+# handlers file for oracle10g
+- name: Firewalld reload
+  service: name=firewalld state=restarted
+

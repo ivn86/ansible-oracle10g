@@ -1,0 +1,53 @@
+---
+# vars file for oracle10g
+
+
+# Needfull packages
+oracle_packages:
+  - libXp
+  - gcc
+  - make
+#  - setarch
+  - libaio
+  - glibc-devel
+  - glibc.i686
+  - libXp.so.6
+  - libXt.so.6
+  - libXtst.so.6
+  - compat-libstdc++-33.x86_64
+  - binutils
+  - elfutils-libelf
+  - elfutils-libelf-devel
+  - glibc
+  - glibc-common
+  - glibc-devel
+  - glibc-headers
+  - gcc
+  - gcc-c++
+  - libaio-devel
+  - libaio
+  - libgcc
+  - libstdc++
+  - make
+  - sysstat
+  - unixODBC
+  - unixODBC-devel
+  - unzip
+  - glibc-devel.i686
+  - libgcc.i686
+  - binutils
+  - compat-db
+  - libstdc++
+  - gdbm
+  - make
+  - ksh
+  - libaio-devel
+  - libXtst
+  - xorg-x11-utils
+  - openmotif
+#  - openmotif.i686
+  - libaio.i686
+  - libaio-devel.i686
+  - compat-glibc.x86_64
+  - sudo
+

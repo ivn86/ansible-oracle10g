@@ -1,0 +1,87 @@
+---
+# tasks file for oracle10g
+
+- name: Install dependences
+  yum:
+    name: "{{ item }}"
+    state: installed
+  with_items: "{{ oracle_packages }}"
+
+# Проверка пользовательского окружения
+- name: Check prepare
+  stat: path=/opt/oracle
+  register: prepared_environment
+
+# Предустановка пользовательского окружения
+- include: prepare-oracle10g.yml
+  # when: prepared.stat.exists == false
+
+- name: Check user environment
+  stat: path=/opt/oracle
+  register: prepared_environment
+
+# Проверка наличия дистрибутива
+- name: Check oracle distro
+  stat: path=/opt/oracle/database
+  register: oracle_distro
+
+# Подготовка дистрибутива Oracle10g
+- include: get-oracle10-distro.yml
+  when: oracle_distro.stat.exists == False
+
+# Проверка установленного Oracle
+- name: Check oracle install
+  stat: path=/opt/oracle/oraInventory
+  register: ora_inventory
+
+# Установка ПО Oracle
+- include: oracle-auto-install.yml
+  when: (oracle_auto_install == True) and
+        (ora_inventory.stat.exists == False)
+
+# Проверка установленного LISTENER
+- name: Check listener install
+  stat: path={{ oracle_home }}/network/admin/listener.ora
+  register: listener
+
+# Установка listener
+- include: netca-auto-install.yml
+  when: (listener.stat.exists == False) and
+        (listener_auto_install == True)
+
+# Проверка установленной DB
+- name: Check DB install
+  stat: path={{ oracle_base }}/oradata
+  register: oradata
+
+# Проверка готовности запуска dbca
+- name: Check prepare dbca
+  stat: path={{ oracle_home }}/bin/oracle.bin
+  register: prepared_dbca
+
+# Проверка установленного ПО
+- name: Check Oracle home
+  stat: path={{ oracle_home }}
+  register: prepared_oracle_home
+
+# Подготовка к запуску dbca
+- include: prepare-dbca.yml
+  when: (prepared_environment.stat.exists == True) and
+        (prepared_oracle_home.stat.exists == True) and
+        (prepared_dbca.stat.exists == False)
+
+# Автоматическая установка DB
+- include: dbca-auto-install.yml
+  when: (dbca_auto_install == True) and
+        (oradata.stat.exists == False)
+
+# Проверка установленной DB
+- name: Check DB install
+  stat: path={{ oracle_base }}/oradata
+  register: oradata
+
+# Postinstall
+- include: postinstall.yml
+  when: oradata.stat.exists == True
+
+

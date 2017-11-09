@@ -1,0 +1,41 @@
+- name: Create init scripts
+  template:
+    src: "init-{{ item }}.sh"
+    dest: "/etc/init.d/{{ item }}"
+    owner: root
+    group: root
+    mode: 700
+    backup: no
+  with_items:
+  - listener
+  - oracle
+
+- name: Autostart on
+  command: chkconfig {{ item }} on
+  with_items:
+  - listener
+  - oracle
+
+- name: Autostart DB instance
+  lineinfile:
+    dest: "/etc/oratab"
+    state: absent
+    regexp: "^{{ oracle_sid }}:{{ oracle_home }}:N$"
+
+- name: Autostart DB instance
+  lineinfile:
+    dest: "/etc/oratab"
+    line: "{{ oracle_sid }}:{{ oracle_home }}:Y"
+
+- name: Firewall configure
+  firewalld:
+    port: "{{ item }}/tcp"
+    permanent: true
+    state: enabled
+  with_items:
+  - 1158
+  - 1521
+  - 5560
+  notify:
+  - Firewalld reload
+  ignore_errors: true

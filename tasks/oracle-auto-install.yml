@@ -1,0 +1,27 @@
+- name: Copy response file
+  template:
+    src: "{{ item }}"
+    dest: "/opt/oracle/{{ item }}"
+    owner: oracle
+    group: oinstall
+    mode: 0660
+    backup: no
+  with_items:
+  - responsefile.rsp
+
+- name: Install Oracle software
+  shell: "/opt/oracle/database/runInstaller \
+    -ignoreSysPrereqs \
+    -silent \
+    -waitforcompletion \
+    -responseFile /opt/oracle/responsefile.rsp >> ~/runInstaller_out.log \
+    "
+  become: yes
+  become_user: oracle
+
+- name: Execute Configuration scripts
+  command: "{{ item }}"
+  with_items:
+  - "/opt/oracle/oraInventory/orainstRoot.sh"
+  - "/opt/oracle/product/10gR2/db/root.sh -silent"
+ 

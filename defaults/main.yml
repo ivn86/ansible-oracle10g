@@ -1,0 +1,18 @@
+---
+# defaults file for oracle10g
+
+# Download options
+oracle_distro_url: "http://some_local_repository/10201_database_linux_x86_64.cpio.gz"
+
+# Environment options
+oracle_base: "/opt/oracle"
+oracle_home: '/opt/oracle/product/10gR2/db'
+oracle_sid: 'orcl'
+
+# Credential options
+oracle_sys_password: 'oracle'
+
+# Auto installation options
+oracle_auto_install: True
+listener_auto_install: True
+dbca_auto_install : True

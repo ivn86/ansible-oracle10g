@@ -1,0 +1,8 @@
+- name: Download Oracle10g installer
+  get_url:
+    url: "{{ oracle_distro_url }}"
+    dest: "{{ oracle_base }}"
+
+- name: Unarchive Oracle10g installer
+  shell: "cd {{ oracle_base }} && gunzip -dc ./10201_database_linux_x86_64.cpio.gz | cpio -idm 2> /opt/oracle/err.txt"
+
